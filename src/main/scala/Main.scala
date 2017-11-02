@@ -20,10 +20,10 @@ object Main extends App {
     .onComplete {
       case Success(response@HttpResponse(StatusCodes.OK, _, entity, _)) =>
         println("Open connection")
-        entity.dataBytes.idleTimeout(2.seconds) // This stream will never stop
-          .watchTermination() {
-          (_, futDone) => futDone.onComplete(_ => println("complete"))
-        }
+        entity.dataBytes.backpressureTimeout(2.seconds).watchTermination() {
+         (mat, futDone) => futDone.onComplete(_ => println("complete"))
+           mat
+        }.runWith(BroadcastHub.sink[ByteString])
     }
 
   StdIn.readLine()
